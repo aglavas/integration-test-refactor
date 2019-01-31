@@ -13,3 +13,5 @@ use Illuminate\Http\Request;
 |
 */
 
+Route::post('/module_reminder_assigner', 'ApiController@assignReminder');
+Route::post('/create', 'ApiController@create');

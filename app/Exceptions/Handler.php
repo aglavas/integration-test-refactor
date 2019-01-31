@@ -4,6 +4,8 @@ namespace App\Exceptions;
 
 use Exception;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Illuminate\Validation\ValidationException;
+use Illuminate\Http\Response;
 
 class Handler extends ExceptionHandler
 {
@@ -46,6 +48,37 @@ class Handler extends ExceptionHandler
      */
     public function render($request, Exception $exception)
     {
+        if ($exception instanceof ValidationException) {
+            return $this->validationOutput($exception);
+        }
+
         return parent::render($request, $exception);
+    }
+
+    /**
+     * Format validation output
+     *
+     * @param $e
+     * @return Response
+     */
+    public function validationOutput($e)
+    {
+        $validator = $e->validator;
+
+        $messages = $validator->getMessageBag()->getMessages();
+
+        $key = key($messages);
+
+        $res = [
+            'error' => [
+                [
+                    'type' => "validation",
+                    'field' => $key,
+                    'message' => $messages[$key][0]
+                ]
+            ]
+        ];
+
+        return ( new Response($res , 422) )->header('Content-Type', 'application/json');
     }
 }
