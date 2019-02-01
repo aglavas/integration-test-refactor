@@ -4,9 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Http\Helpers\InfusionsoftHelper;
 use App\Http\Requests\PostAssignReminderRequest;
-use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Http\Request;
-use Response;
 use App\User;
 use App\Module;
 
@@ -15,9 +12,7 @@ class ApiController extends Controller
 
     // Todo: Module reminder assigner
 
-    private function exampleCustomer($username){
-
-        $infusionsoft = new InfusionsoftHelper();
+    private function exampleCustomer($username, $infusionsoft){
 
         $uniqid = uniqid();
 
@@ -42,26 +37,22 @@ class ApiController extends Controller
 
     /**
      * Create example customers
+     *
+     * @param InfusionsoftHelper $infusionsoftHelper
      */
-    public function create()
+    public function create(InfusionsoftHelper $infusionsoftHelper)
     {
-        $this->exampleCustomer('test1');
-        $this->exampleCustomer('test2');
-        $this->exampleCustomer('test4');
+        $this->exampleCustomer('test1', $infusionsoftHelper);
+        $this->exampleCustomer('test2', $infusionsoftHelper);
+        $this->exampleCustomer('test4', $infusionsoftHelper);
 
         echo "created";
     }
 
-
     /**
-     * Assign reminder method
-     *
      * @param PostAssignReminderRequest $request
-     * @param InfusionsoftHelper $infusionsoftHelper
-     * @param Module $module
-     * @param User $user
      */
-    public function assignReminder(PostAssignReminderRequest $request,  InfusionsoftHelper $infusionsoftHelper, Module $module, User $user)
+    public function assignReminder(PostAssignReminderRequest $request)
     {
 
     }
