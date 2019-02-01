@@ -17,4 +17,15 @@ class Module extends Model
     {
         return $this->hasOne(ModuleTagId::class, 'module_id', 'id');
     }
+
+    /**
+     * Return ModuleCollection instace
+     *
+     * @param array $models
+     * @return ModuleCollection|\Illuminate\Database\Eloquent\Collection
+     */
+    public function newCollection(array $models = [])
+    {
+        return new ModuleCollection($models);
+    }
 }
