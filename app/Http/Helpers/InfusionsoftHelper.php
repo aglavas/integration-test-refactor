@@ -80,7 +80,8 @@ class InfusionsoftHelper
      *
      * @param ModuleTagId $moduleTagId
      * @param Module $module
-     * @return Module[]|bool|\Illuminate\Database\Eloquent\Builder[]|\Illuminate\Database\Eloquent\Collection
+     * @return Module[]|\Illuminate\Database\Eloquent\Builder[]|\Illuminate\Database\Eloquent\Collection
+     * @throws \Exception
      */
     public function getAllTags(ModuleTagId $moduleTagId, Module $module)
     {
@@ -90,14 +91,13 @@ class InfusionsoftHelper
             try {
                 $infusionTags = $this->infusionsoft->tags();
                 $this->saveTags($infusionTags, $moduleTagId, $module);
-                return $moduleTagIds = $module->with('infusionId')->get();
             } catch (\Exception $e){
                 Log::error((string) $e);
-                return false;
+                throw new \Exception('Infusionsoft connection problem.');
             }
-        } else {
-            return $moduleTagIds = $module->with('infusionId')->get();
         }
+
+        return $moduleTagIds = $module->with('infusionId')->get();
     }
 
     public function getContact($email)
@@ -111,12 +111,10 @@ class InfusionsoftHelper
         ];
 
         try {
-
             return $this->infusionsoft->contacts($email, $fields);
-
         } catch (\Exception $e){
             Log::error((string) $e);
-            return false;
+            throw new \Exception('Infusionsoft connection problem.');
         }
     }
 

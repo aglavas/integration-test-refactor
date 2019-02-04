@@ -28,4 +28,63 @@ class NoCoursesTest extends TestCase
             'message' => 'User has no courses.',
         ]);
     }
+
+    /**
+     * @test
+     */
+    public function non_existent_mail_entered()
+    {
+        $response = $this->post('api/module_reminder_assigner', ['contact_email' => rand() . '@test.com']);
+
+        $response->assertStatus(422);
+
+        $response->assertJsonFragment(['field' => 'contact_email']);
+        $response->assertJsonFragment(['message' => 'The selected contact email is invalid.']);
+    }
+
+    /**
+     * @test
+     */
+    public function wrong_format_mail_entered()
+    {
+        $response = $this->post('api/module_reminder_assigner', ['contact_email' => rand() . 'test.com']);
+
+        $response->assertStatus(422);
+
+        $response->assertJsonFragment(['field' => 'contact_email']);
+        $response->assertJsonFragment(['message' => 'The contact email must be a valid email address.']);
+
+    }
+
+    /**
+     * @test
+     */
+    public function contact_email_field_missing()
+    {
+        $response = $this->post('api/module_reminder_assigner', ['contact' => rand() . 'test.com']);
+
+        $response->assertStatus(422);
+
+        $response->assertJsonFragment(['field' => 'contact_email']);
+        $response->assertJsonFragment(['message' => 'The contact email field is required.']);
+
+    }
+
+    /**
+     * @test
+     */
+    public function contact_email_field_empty()
+    {
+        $response = $this->post('api/module_reminder_assigner', ['contact_email' => '']);
+
+        $response->assertStatus(422);
+
+        $response->assertJsonFragment(['field' => 'contact_email']);
+        $response->assertJsonFragment(['message' => 'The contact email field is required.']);
+
+    }
+
+
+
+
 }
