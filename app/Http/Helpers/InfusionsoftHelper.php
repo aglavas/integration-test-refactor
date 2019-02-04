@@ -2,6 +2,9 @@
 
 namespace App\Http\Helpers;
 
+use App\Adapters\InfusionsoftAdapter;
+use App\Module;
+use App\ModuleTagId;
 use Infusionsoft;
 use Log;
 use Storage;
@@ -12,8 +15,15 @@ class InfusionsoftHelper
 {
     private $infusionsoft;
 
-    public function __construct()
+    /**
+     * InfusionsoftHelper constructor.
+     * @param InfusionsoftAdapter $infusionsoft
+     * @throws \Illuminate\Contracts\Filesystem\FileNotFoundException
+     */
+    public function __construct(InfusionsoftAdapter $infusionsoft)
     {
+        $this->infusionsoft = $infusionsoft;
+
         if (Storage::exists('inf_token')) {
 
             Infusionsoft::setToken(unserialize(Storage::get("inf_token")));
@@ -38,14 +48,55 @@ class InfusionsoftHelper
         return '<a href="' . Infusionsoft::getAuthorizationUrl() . '">Authorize Infusionsoft</a>';
     }
 
-    public function getAllTags(){
-        try {
+    /**
+     * Save tags to DB
+     *
+     * @param Infusionsoft\InfusionsoftCollection $infusionTags
+     * @param ModuleTagId $moduleTagId
+     * @param Module $module
+     */
+    private function saveTags(Infusionsoft\InfusionsoftCollection $infusionTags, ModuleTagId $moduleTagId, Module $module)
+    {
+        foreach ($infusionTags->all() as $tag) {
+            if ($tag->name == 'Module reminders completed') {
+                $moduleTagId->create([
+                    'module_id' => null,
+                    'infusion_id' => $tag->id,
+                    'completed' => 1
+                ]);
+            } elseif (multi_strpos($tag->name, ['IAA', 'IPA', 'IEA']) !== false) {
+                $expodedName = explode(' ', $tag->name);
 
-            return Infusionsoft::tags()->all();
+                /** @var Module $module */
+                $module = $module->where('course_key', strtolower($expodedName[1]))->where('module_number', $expodedName[3])->first();
 
-        } catch (\Exception $e){
-            Log::error((string) $e);
-            return false;
+                $module->infusionId()->create(['infusion_id' => $tag->id]);
+            }
+        }
+    }
+
+    /**
+     * Get all tags from Infusion
+     *
+     * @param ModuleTagId $moduleTagId
+     * @param Module $module
+     * @return Module[]|bool|\Illuminate\Database\Eloquent\Builder[]|\Illuminate\Database\Eloquent\Collection
+     */
+    public function getAllTags(ModuleTagId $moduleTagId, Module $module)
+    {
+        $moduleTagIds = $moduleTagId->get();
+
+        if ($moduleTagIds->count() === 0) {
+            try {
+                $infusionTags = $this->infusionsoft->tags();
+                $this->saveTags($infusionTags, $moduleTagId, $module);
+                return $moduleTagIds = $module->with('infusionId')->get();
+            } catch (\Exception $e){
+                Log::error((string) $e);
+                return false;
+            }
+        } else {
+            return $moduleTagIds = $module->with('infusionId')->get();
         }
     }
 
@@ -61,7 +112,7 @@ class InfusionsoftHelper
 
         try {
 
-            return Infusionsoft::contacts('xml')->findByEmail($email, $fields)[0];
+            return $this->infusionsoft->contacts($email, $fields);
 
         } catch (\Exception $e){
             Log::error((string) $e);
@@ -71,7 +122,7 @@ class InfusionsoftHelper
 
     public function addTag($contact_id, $tag_id){
         try {
-            return Infusionsoft::contacts('xml')->addToGroup($contact_id, $tag_id);
+            return $this->infusionsoft->addTag($contact_id, $tag_id);
 
         } catch (\Exception $e){
             Log::error((string) $e);

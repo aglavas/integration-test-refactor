@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Helpers\InfusionsoftHelper;
 use App\Http\Requests\PostAssignReminderRequest;
+use App\Services\TagAssigner;
 use App\User;
 use App\Module;
 
@@ -28,8 +29,8 @@ class ApiController extends Controller
         ]);
 
         // attach IPA M1-3 & M5
-        $user->completed_modules()->attach(Module::where('course_key', 'ipa')->limit(3)->get());
-        $user->completed_modules()->attach(Module::where('name', 'IPA Module 5')->first());
+        $user->completed_modules()->attach(Module::where('course_key', 'ipa')->limit(7)->get());
+        $user->completed_modules()->attach(Module::where('name', 'IEA Module 7')->first());
 
 
         return $user;
@@ -42,18 +43,34 @@ class ApiController extends Controller
      */
     public function create(InfusionsoftHelper $infusionsoftHelper)
     {
-        $this->exampleCustomer('test1', $infusionsoftHelper);
-        $this->exampleCustomer('test2', $infusionsoftHelper);
-        $this->exampleCustomer('test4', $infusionsoftHelper);
+        $this->exampleCustomer('newtest11', $infusionsoftHelper);
+        $this->exampleCustomer('newtest12', $infusionsoftHelper);
+        $this->exampleCustomer('newtest13', $infusionsoftHelper);
 
         echo "created";
     }
 
     /**
+     * Assign reminder tag method
+     *
      * @param PostAssignReminderRequest $request
+     * @param TagAssigner $assigner
+     * @return \Illuminate\Http\JsonResponse
      */
-    public function assignReminder(PostAssignReminderRequest $request)
+    public function assignReminder(PostAssignReminderRequest $request, TagAssigner $assigner)
     {
+        try {
+            $result = $assigner->assign($request->input('contact_email'));
+        } catch (\Exception $exception) {
+            return $this->errorMessageResponse($exception->getMessage(), 500);
+        }
 
+        if ($result === true) {
+            return $this->successMessageResponse('Module reminders completed.', 200);
+        } elseif ($result) {
+            return $this->successMessageResponse('Reminder successfully added for ' . $result, 200);
+        }
+
+        return $this->errorMessageResponse('Error occurred while communicating with InfusionSoft API.', 500);
     }
 }

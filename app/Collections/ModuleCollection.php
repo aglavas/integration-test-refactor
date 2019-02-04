@@ -21,7 +21,7 @@ class ModuleCollection extends Collection
 
         $nextModule = $courseModulesLeft->first();
 
-        if(!$nextModule) {
+        if (!$nextModule) {
             throw new CourseCompletedException();
         }
 

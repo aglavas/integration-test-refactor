@@ -9,8 +9,8 @@ use Response;
 
 class InfusionsoftController extends Controller
 {
-    public function authorizeInfusionsoft(){
-        return (new InfusionsoftHelper())->authorize();
+    public function authorizeInfusionsoft(InfusionsoftHelper $infusionsoftHelper){
+        return ($infusionsoftHelper)->authorize();
     }
 
     public function testInfusionsoftIntegrationGetEmail($email){
